@@ -1,0 +1,94 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: optional:configserver:http://localhost:8888
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service-auth
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**
+        - id: user-service-profile
+          uri: lb://user-service
+          predicates:
+            - Path=/api/profile/**
+          filters:
+            - name: AuthenticationFilter
+              args: {}
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - name: AuthenticationFilter
+              args: {}
+        - id: post-service-uploads
+          uri: lb://post-service
+          predicates:
+            - Path=/uploads/**
+        - id: post-service
+          uri: lb://post-service
+          predicates:
+            - Path=/api/posts/**
+          filters:
+            - name: AuthenticationFilter
+        - id: feed-service
+          uri: lb://feed-service
+          predicates:
+            - Path=/api/feed/**
+          filters:
+            - name: AuthenticationFilter
+        - id: follow-service
+          uri: lb://follow-service
+          predicates:
+            - Path=/api/follows/**
+          filters:
+            - name: AuthenticationFilter
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - name: AuthenticationFilter
+        - id: chat-service
+          uri: lb://chat-service
+          predicates:
+            - Path=/api/chat/**, /ws/**
+          filters:
+            - name: AuthenticationFilter
+        - id: search-service
+          uri: lb://search-service
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - name: AuthenticationFilter
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+
+jwt:
+  secret: revhubsecretkeythatisverylongandcomplex12345678901234567890
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

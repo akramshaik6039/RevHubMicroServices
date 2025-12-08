@@ -1,0 +1,190 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: revhub-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: revhub
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - revhub-network
+
+  mongodb:
+    image: mongo:7.0
+    container_name: revhub-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - revhub-network
+
+  redis:
+    image: redis:7.0
+    container_name: revhub-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - revhub-network
+
+  consul:
+    image: consul:1.15
+    container_name: revhub-consul
+    ports:
+      - "8500:8500"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    networks:
+      - revhub-network
+
+  config-server:
+    build: ./backend/config-server
+    container_name: revhub-config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      - consul
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-network
+
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: revhub-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - consul
+      - config-server
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    networks:
+      - revhub-network
+
+  user-service:
+    build: ./backend/user-service
+    container_name: revhub-user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+      - consul
+      - config-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revhub?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-network
+
+  post-service:
+    build: ./backend/post-service
+    container_name: revhub-post-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mysql
+      - consul
+      - config-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revhub_post?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-network
+
+  follow-service:
+    build: ./backend/follow-service
+    container_name: revhub-follow-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - mysql
+      - consul
+      - config-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revhub_follow?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-network
+
+  feed-service:
+    build: ./backend/feed-service
+    container_name: revhub-feed-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - redis
+      - consul
+      - config-server
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-network
+
+  notification-service:
+    build: ./backend/notification-service
+    container_name: revhub-notification-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      - mongodb
+      - consul
+      - config-server
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/revhub_notifications
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-network
+
+  chat-service:
+    build: ./backend/chat-service
+    container_name: revhub-chat-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      - mongodb
+      - consul
+      - config-server
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/revhub_chat
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-network
+
+  search-service:
+    build: ./backend/search-service
+    container_name: revhub-search-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      - consul
+      - config-server
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-network
+
+  frontend:
+    build: ./frontend
+    container_name: revhub-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - revhub-network
+
+networks:
+  revhub-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  mongo-data:
