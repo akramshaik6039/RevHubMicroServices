@@ -1,0 +1,189 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: revhub-mysql-staging
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: revhub
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-staging-data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - revhub-staging
+
+  mongodb:
+    image: mongo:7.0
+    container_name: revhub-mongodb-staging
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-staging-data:/data/db
+    networks:
+      - revhub-staging
+
+  redis:
+    image: redis:7.0
+    container_name: revhub-redis-staging
+    ports:
+      - "6379:6379"
+    networks:
+      - revhub-staging
+
+  consul:
+    image: consul:1.15
+    container_name: revhub-consul-staging
+    ports:
+      - "8500:8500"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    networks:
+      - revhub-staging
+
+  config-server:
+    image: akramshaik6039/revhub-config-server:latest
+    container_name: revhub-config-server-staging
+    ports:
+      - "8888:8888"
+    depends_on:
+      - consul
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  api-gateway:
+    image: akramshaik6039/revhub-api-gateway:latest
+    container_name: revhub-api-gateway-staging
+    ports:
+      - "8080:8080"
+    depends_on:
+      - consul
+      - config-server
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  user-service:
+    image: akramshaik6039/revhub-user-service:latest
+    container_name: revhub-user-service-staging
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+      - consul
+      - config-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revhub?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  post-service:
+    image: akramshaik6039/revhub-post-service:latest
+    container_name: revhub-post-service-staging
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mysql
+      - consul
+      - config-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revhub_posts?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  feed-service:
+    image: akramshaik6039/revhub-feed-service:latest
+    container_name: revhub-feed-service-staging
+    ports:
+      - "8083:8083"
+    depends_on:
+      - redis
+      - consul
+      - config-server
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  follow-service:
+    image: akramshaik6039/revhub-follow-service:latest
+    container_name: revhub-follow-service-staging
+    ports:
+      - "8084:8084"
+    depends_on:
+      - mysql
+      - consul
+      - config-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revhub_follows?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  notification-service:
+    image: akramshaik6039/revhub-notification-service:latest
+    container_name: revhub-notification-service-staging
+    ports:
+      - "8085:8085"
+    depends_on:
+      - mongodb
+      - consul
+      - config-server
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/revhub_notifications
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  chat-service:
+    image: akramshaik6039/revhub-chat-service:latest
+    container_name: revhub-chat-service-staging
+    ports:
+      - "8086:8086"
+    depends_on:
+      - mongodb
+      - consul
+      - config-server
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/revhub_chat
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  search-service:
+    image: akramshaik6039/revhub-search-service:latest
+    container_name: revhub-search-service-staging
+    ports:
+      - "8087:8087"
+    depends_on:
+      - consul
+      - config-server
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul
+    networks:
+      - revhub-staging
+
+  frontend:
+    image: akramshaik6039/revhub-frontend:latest
+    container_name: revhub-frontend-staging
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - revhub-staging
+
+networks:
+  revhub-staging:
+    driver: bridge
+
+volumes:
+  mysql-staging-data:
+  mongo-staging-data:

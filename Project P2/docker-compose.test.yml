@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql-test:
+    image: mysql:8.0
+    container_name: revhub-mysql-test
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: revhub_test
+    ports:
+      - "3307:3306"
+    tmpfs:
+      - /var/lib/mysql
+    networks:
+      - revhub-test
+
+  mongodb-test:
+    image: mongo:7.0
+    container_name: revhub-mongodb-test
+    ports:
+      - "27018:27017"
+    tmpfs:
+      - /data/db
+    networks:
+      - revhub-test
+
+  redis-test:
+    image: redis:7.0
+    container_name: revhub-redis-test
+    ports:
+      - "6380:6379"
+    networks:
+      - revhub-test
+
+  consul-test:
+    image: consul:1.15
+    container_name: revhub-consul-test
+    ports:
+      - "8501:8500"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    networks:
+      - revhub-test
+
+networks:
+  revhub-test:
+    driver: bridge
