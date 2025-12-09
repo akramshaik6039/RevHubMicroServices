@@ -31,10 +31,14 @@ spring:
           filters:
             - name: AuthenticationFilter
               args: {}
+        - id: user-service-uploads
+          uri: lb://user-service
+          predicates:
+            - Path=/uploads/profiles/**
         - id: post-service-uploads
           uri: lb://post-service
           predicates:
-            - Path=/uploads/**
+            - Path=/uploads/posts/**
         - id: post-service
           uri: lb://post-service
           predicates:

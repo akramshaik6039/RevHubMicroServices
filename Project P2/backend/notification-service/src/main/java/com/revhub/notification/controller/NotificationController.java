@@ -58,7 +58,7 @@ public class NotificationController {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.set("X-User-Id", userId.toString());
             org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
-            org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity("http://follow-service/api/follows/requests/" + followId + "/accept", entity, String.class);
+            org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity("http://follow-service:8083/api/follows/requests/" + followId + "/accept", entity, String.class);
             notificationService.deleteFollowRequestNotification(followId);
             return ResponseEntity.ok(response.getBody());
         } catch (org.springframework.web.client.HttpClientErrorException e) {
@@ -77,7 +77,7 @@ public class NotificationController {
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.set("X-User-Id", userId.toString());
             org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
-            restTemplate.postForEntity("http://follow-service/api/follows/requests/" + followId + "/reject", entity, String.class);
+            restTemplate.postForEntity("http://follow-service:8083/api/follows/requests/" + followId + "/reject", entity, String.class);
             notificationService.deleteFollowRequestNotification(followId);
             return ResponseEntity.ok("Follow request rejected");
         } catch (Exception e) {

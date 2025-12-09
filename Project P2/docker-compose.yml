@@ -80,6 +80,8 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revhub?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_CLOUD_CONSUL_HOST: consul
+    volumes:
+      - ./backend/user-service/uploads:/app/uploads
     networks:
       - revhub-network
 
@@ -95,6 +97,8 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/revhub_post?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_CLOUD_CONSUL_HOST: consul
+    volumes:
+      - ./backend/post-service/uploads:/app/uploads
     networks:
       - revhub-network
 

@@ -50,12 +50,12 @@ public class FollowService {
     
     private void notifyFollow(Long userId, Long actorId) {
         try {
-            java.util.Map<String, Object> actor = restTemplate.getForObject("http://localhost:8081/api/users/" + actorId, java.util.Map.class);
+            java.util.Map<String, Object> actor = restTemplate.getForObject("http://user-service:8081/api/users/" + actorId, java.util.Map.class);
             java.util.Map<String, Object> request = new java.util.HashMap<>();
             request.put("userId", userId);
             request.put("actorId", actorId);
             request.put("actorUsername", actor.get("username"));
-            restTemplate.postForObject("http://localhost:8085/api/notifications/follow", request, Void.class);
+            restTemplate.postForObject("http://notification-service:8085/api/notifications/follow", request, Void.class);
         } catch (Exception e) {
             // Ignore notification errors
         }
@@ -63,13 +63,13 @@ public class FollowService {
     
     private void notifyFollowRequest(Long userId, Long actorId, Long followRequestId) {
         try {
-            java.util.Map<String, Object> actor = restTemplate.getForObject("http://localhost:8081/api/users/" + actorId, java.util.Map.class);
+            java.util.Map<String, Object> actor = restTemplate.getForObject("http://user-service:8081/api/users/" + actorId, java.util.Map.class);
             java.util.Map<String, Object> request = new java.util.HashMap<>();
             request.put("userId", userId);
             request.put("actorId", actorId);
             request.put("actorUsername", actor.get("username"));
             request.put("followRequestId", followRequestId);
-            restTemplate.postForObject("http://localhost:8085/api/notifications/follow-request", request, Void.class);
+            restTemplate.postForObject("http://notification-service:8085/api/notifications/follow-request", request, Void.class);
         } catch (Exception e) {
             // Ignore notification errors
         }
@@ -132,7 +132,7 @@ public class FollowService {
     
     private void removeFollowRequestNotification(Long followRequestId) {
         try {
-            restTemplate.delete("http://localhost:8085/api/notifications/follow-request/" + followRequestId);
+            restTemplate.delete("http://notification-service:8085/api/notifications/follow-request/" + followRequestId);
         } catch (Exception e) {
             // Ignore
         }

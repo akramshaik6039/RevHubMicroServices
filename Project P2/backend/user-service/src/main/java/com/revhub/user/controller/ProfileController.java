@@ -35,9 +35,9 @@ public class ProfileController {
                     
                     try {
                         Long followersCount = restTemplate.getForObject(
-                            "http://localhost:8084/api/follows/" + user.getId() + "/followers/count", Long.class);
+                            "http://follow-service:8083/api/follows/" + user.getId() + "/followers/count", Long.class);
                         Long followingCount = restTemplate.getForObject(
-                            "http://localhost:8084/api/follows/" + user.getId() + "/following/count", Long.class);
+                            "http://follow-service:8083/api/follows/" + user.getId() + "/following/count", Long.class);
                         profile.put("followersCount", followersCount != null ? followersCount : 0);
                         profile.put("followingCount", followingCount != null ? followingCount : 0);
                     } catch (Exception e) {
@@ -98,7 +98,7 @@ public class ProfileController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             ResponseEntity<List> response = restTemplate.getForEntity(
-                "http://localhost:8082/api/posts/user/" + user.getId(),
+                "http://post-service:8082/api/posts/user/" + user.getId(),
                 List.class
             );
             
@@ -121,7 +121,7 @@ public class ProfileController {
             headers.set("X-User-Id", userId.toString());
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             
-            String url = "http://localhost:8084/api/follows/" + targetUser.getId() + "?isPrivate=" + (targetUser.getIsPrivate() != null ? targetUser.getIsPrivate() : false);
+            String url = "http://follow-service:8083/api/follows/" + targetUser.getId() + "?isPrivate=" + (targetUser.getIsPrivate() != null ? targetUser.getIsPrivate() : false);
             System.out.println("Calling follow-service: " + url);
             
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -153,7 +153,7 @@ public class ProfileController {
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                "http://localhost:8084/api/follows/" + targetUser.getId(),
+                "http://follow-service:8083/api/follows/" + targetUser.getId(),
                 HttpMethod.DELETE,
                 entity,
                 Map.class
@@ -178,7 +178,7 @@ public class ProfileController {
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                "http://localhost:8084/api/follows/status/" + targetUser.getId(),
+                "http://follow-service:8083/api/follows/status/" + targetUser.getId(),
                 HttpMethod.GET,
                 entity,
                 Map.class
@@ -200,7 +200,7 @@ public class ProfileController {
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             
             ResponseEntity<List> response = restTemplate.exchange(
-                "http://localhost:8084/api/follows/requests",
+                "http://follow-service:8083/api/follows/requests",
                 HttpMethod.GET,
                 entity,
                 List.class
@@ -232,7 +232,7 @@ public class ProfileController {
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                "http://localhost:8084/api/follows/requests/" + followId + "/accept",
+                "http://follow-service:8083/api/follows/requests/" + followId + "/accept",
                 HttpMethod.POST,
                 entity,
                 Map.class
@@ -254,7 +254,7 @@ public class ProfileController {
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                "http://localhost:8084/api/follows/requests/" + followId + "/reject",
+                "http://follow-service:8083/api/follows/requests/" + followId + "/reject",
                 HttpMethod.POST,
                 entity,
                 Map.class
@@ -279,7 +279,7 @@ public class ProfileController {
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                "http://localhost:8084/api/follows/cancel/" + targetUser.getId(),
+                "http://follow-service:8083/api/follows/cancel/" + targetUser.getId(),
                 HttpMethod.DELETE,
                 entity,
                 Map.class
@@ -300,7 +300,7 @@ public class ProfileController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             ResponseEntity<List> response = restTemplate.getForEntity(
-                "http://localhost:8084/api/follows/" + user.getId() + "/followers",
+                "http://follow-service:8083/api/follows/" + user.getId() + "/followers",
                 List.class
             );
             
@@ -327,7 +327,7 @@ public class ProfileController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             ResponseEntity<List> response = restTemplate.getForEntity(
-                "http://localhost:8084/api/follows/" + user.getId() + "/following",
+                "http://follow-service:8083/api/follows/" + user.getId() + "/following",
                 List.class
             );
             
@@ -358,7 +358,7 @@ public class ProfileController {
             HttpEntity<Void> entity = new HttpEntity<>(headers);
             
             ResponseEntity<Map> response = restTemplate.exchange(
-                "http://localhost:8084/api/follows/remove/" + followerUser.getId(),
+                "http://follow-service:8083/api/follows/remove/" + followerUser.getId(),
                 HttpMethod.DELETE,
                 entity,
                 Map.class
@@ -397,24 +397,31 @@ public class ProfileController {
     @GetMapping("/suggestions")
     public ResponseEntity<List<User>> getSuggestedUsers(@RequestHeader("X-User-Id") Long userId) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-User-Id", userId.toString());
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            // Get user's following list
+            List<Long> following = new ArrayList<>();
+            try {
+                ResponseEntity<List> response = restTemplate.getForEntity(
+                    "http://follow-service:8083/api/follows/" + userId + "/following",
+                    List.class
+                );
+                List<?> followingIds = response.getBody();
+                if (followingIds != null) {
+                    for (Object idObj : followingIds) {
+                        following.add(((Number) idObj).longValue());
+                    }
+                }
+            } catch (Exception e) {
+                // Ignore, continue with empty following list
+            }
             
-            ResponseEntity<List> response = restTemplate.exchange(
-                "http://localhost:8084/api/follows/suggestions",
-                HttpMethod.GET,
-                entity,
-                List.class
-            );
-            
+            // Get all users except current user and already following
+            List<User> allUsers = userRepository.findAll();
             List<User> suggestions = new ArrayList<>();
-            List<?> userIds = response.getBody();
             
-            if (userIds != null && !userIds.isEmpty()) {
-                for (Object idObj : userIds) {
-                    Long id = ((Number) idObj).longValue();
-                    userRepository.findById(id).ifPresent(suggestions::add);
+            for (User user : allUsers) {
+                if (!user.getId().equals(userId) && !following.contains(user.getId())) {
+                    suggestions.add(user);
+                    if (suggestions.size() >= 5) break; // Limit to 5 suggestions
                 }
             }
             

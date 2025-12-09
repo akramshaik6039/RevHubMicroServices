@@ -1,6 +1,7 @@
 e:\Project P2\Project P2\backend\user-service\src\main\java\com\revhub\user\config\AppConfig.java
 e:\Project P2\Project P2\backend\user-service\src\main\java\com\revhub\user\config\WebConfig.java
 e:\Project P2\Project P2\backend\user-service\src\main\java\com\revhub\user\controller\AuthController.java
+e:\Project P2\Project P2\backend\user-service\src\main\java\com\revhub\user\controller\FileController.java
 e:\Project P2\Project P2\backend\user-service\src\main\java\com\revhub\user\controller\ProfileController.java
 e:\Project P2\Project P2\backend\user-service\src\main\java\com\revhub\user\controller\UserController.java
 e:\Project P2\Project P2\backend\user-service\src\main\java\com\revhub\user\dto\ForgotPasswordRequest.java

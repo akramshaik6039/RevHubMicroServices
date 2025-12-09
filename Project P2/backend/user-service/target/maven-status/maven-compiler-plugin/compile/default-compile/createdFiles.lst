@@ -18,6 +18,7 @@ com\revhub\user\UserServiceApplication.class
 com\revhub\user\dto\ResetPasswordRequest.class
 com\revhub\user\security\JwtUtil.class
 com\revhub\user\security\SecurityConfig.class
+com\revhub\user\controller\FileController.class
 com\revhub\user\controller\UserController.class
 com\revhub\user\service\UserService.class
 com\revhub\user\controller\AuthController.class
