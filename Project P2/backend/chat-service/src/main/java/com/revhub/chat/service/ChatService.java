@@ -3,6 +3,7 @@ package com.revhub.chat.service;
 import com.revhub.chat.entity.ChatMessage;
 import com.revhub.chat.repository.ChatMessageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
@@ -14,9 +15,15 @@ import java.util.stream.Collectors;
 public class ChatService {
     
     private final ChatMessageRepository chatMessageRepository;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     
     public ChatMessage sendMessage(ChatMessage message) {
         ChatMessage saved = chatMessageRepository.save(message);
+        try {
+            kafkaTemplate.send("chat-events", "message:" + message.getSenderUsername() + ":" + message.getReceiverUsername());
+        } catch (Exception e) {
+            // Kafka unavailable
+        }
         notifyMessage(message.getReceiverUsername(), message.getSenderUsername());
         return saved;
     }
