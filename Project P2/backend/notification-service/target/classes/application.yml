@@ -1,9 +1,0 @@
-server:
-  port: 8085
-
-spring:
-  application:
-    name: notification-service
-  data:
-    mongodb:
-      uri: mongodb://mongodb:27017/revhub_notifications

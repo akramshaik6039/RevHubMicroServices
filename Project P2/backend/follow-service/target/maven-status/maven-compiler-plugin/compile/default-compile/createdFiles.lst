@@ -1,7 +1,0 @@
-com\revhub\follow\controller\FollowController.class
-com\revhub\follow\repository\FollowRepository.class
-com\revhub\follow\config\AppConfig.class
-com\revhub\follow\service\FollowService.class
-com\revhub\follow\entity\Follow$FollowStatus.class
-com\revhub\follow\FollowServiceApplication.class
-com\revhub\follow\entity\Follow.class
