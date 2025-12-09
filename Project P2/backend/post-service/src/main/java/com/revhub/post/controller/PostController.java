@@ -54,6 +54,7 @@ public class PostController {
     
     @PostMapping
     public ResponseEntity<Post> createPost(@RequestBody Post post, @RequestHeader("X-User-Id") Long userId) {
+        System.out.println("Creating post for userId: " + userId + ", content: " + post.getContent());
         post.setUserId(userId);
         if (post.getVisibility() == null) {
             post.setVisibility(com.revhub.post.entity.PostVisibility.PUBLIC);
@@ -65,7 +66,9 @@ public class PostController {
                 post.setMediaType("image");
             }
         }
-        return ResponseEntity.ok(postService.createPost(post));
+        Post createdPost = postService.createPost(post);
+        System.out.println("Post created with ID: " + createdPost.getId() + " for userId: " + createdPost.getUserId());
+        return ResponseEntity.ok(createdPost);
     }
     
     @PostMapping("/upload")
@@ -74,6 +77,8 @@ public class PostController {
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "visibility", defaultValue = "PUBLIC") String visibility,
             @RequestHeader("X-User-Id") Long userId) {
+        
+        System.out.println("Creating post with media for userId: " + userId + ", content: " + content);
         
         Post post = new Post();
         post.setUserId(userId);
@@ -100,7 +105,9 @@ public class PostController {
             }
         }
         
-        return ResponseEntity.ok(postService.createPost(post));
+        Post createdPost = postService.createPost(post);
+        System.out.println("Post with media created with ID: " + createdPost.getId() + " for userId: " + createdPost.getUserId());
+        return ResponseEntity.ok(createdPost);
     }
     
     @GetMapping("/{id}")
@@ -110,7 +117,9 @@ public class PostController {
     
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long userId) {
+        System.out.println("Getting posts for userId: " + userId);
         List<Post> posts = postService.getUserPosts(userId);
+        System.out.println("Found " + posts.size() + " posts for userId: " + userId);
         return ResponseEntity.ok(postService.enrichPostsWithAuthors(posts));
     }
     

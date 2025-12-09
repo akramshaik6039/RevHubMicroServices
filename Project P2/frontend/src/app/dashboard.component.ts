@@ -1244,20 +1244,19 @@ export class DashboardComponent implements OnInit {
   }
   
   refreshUnreadCounts() {
-    // Use individual calls since bulk endpoint might not be working
+    // Only refresh if on chat tab
+    if (this.activeTab !== 'chat') return;
+    
     this.contactUsernames.forEach(username => {
       this.chatService.getUnreadCount(username).subscribe({
         next: (count) => {
           this.unreadCounts[username] = count;
-          console.log(`Unread count for ${username}: ${count}`);
         },
         error: (err) => {
-          console.error(`Error getting unread count for ${username}:`, err);
           this.unreadCounts[username] = 0;
         }
       });
     });
-    console.log('Current unread counts after refresh:', this.unreadCounts);
   }
   
   onChatSearchInput() {
@@ -1358,21 +1357,13 @@ export class DashboardComponent implements OnInit {
   private globalUnreadInterval: any;
 
   startGlobalUnreadCountRefresh() {
-    // Load contacts and refresh counts immediately
+    // Only load contacts, don't start polling
     this.chatService.getChatContacts().subscribe({
       next: (contactUsernames) => {
         this.contactUsernames = contactUsernames.filter(contact => contact !== this.currentUser?.username);
-        this.refreshUnreadCounts();
       },
       error: (error) => console.error('Error loading contacts:', error)
     });
-
-    // Set up global refresh every 5 seconds
-    this.globalUnreadInterval = setInterval(() => {
-      if (this.contactUsernames.length > 0) {
-        this.refreshUnreadCounts();
-      }
-    }, 5000);
   }
 
   getTotalUnreadCount(): number {

@@ -1,6 +1,7 @@
 package com.revhub.chat.service;
 
 import com.revhub.chat.entity.ChatMessage;
+import com.revhub.chat.event.ChatMessageEvent;
 import com.revhub.chat.repository.ChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,9 +15,21 @@ import java.util.stream.Collectors;
 public class ChatService {
     
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatEventProducer chatEventProducer;
     
     public ChatMessage sendMessage(ChatMessage message) {
         ChatMessage saved = chatMessageRepository.save(message);
+        
+        // Publish to Kafka
+        ChatMessageEvent event = new ChatMessageEvent(
+            saved.getId(),
+            saved.getSenderUsername(),
+            saved.getReceiverUsername(),
+            saved.getContent(),
+            saved.getTimestamp()
+        );
+        chatEventProducer.sendChatMessageEvent(event);
+        
         notifyMessage(message.getReceiverUsername(), message.getSenderUsername());
         return saved;
     }

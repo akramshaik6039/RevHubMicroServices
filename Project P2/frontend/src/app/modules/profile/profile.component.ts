@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -13,7 +13,7 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   user: User | null = null;
   posts: Post[] = [];
   isLoading = true;
@@ -58,6 +58,17 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    // Cleanup if needed
+  }
+
+  ionViewWillEnter() {
+    // Reload posts when view is entered (for Ionic)
+    if (this.username) {
+      this.loadUserPosts();
+    }
+  }
+
   loadProfile() {
     this.profileService.getProfile(this.username).subscribe({
       next: (user) => {
@@ -74,12 +85,16 @@ export class ProfileComponent implements OnInit {
   }
 
   loadUserPosts() {
+    console.log('Loading posts for username:', this.username);
     this.profileService.getUserPosts(this.username).subscribe({
       next: (posts) => {
-        this.posts = posts;
+        console.log('Received posts:', posts);
+        console.log('Posts count:', posts?.length);
+        this.posts = posts || [];
       },
       error: (error) => {
         console.error('Error loading user posts:', error);
+        this.posts = [];
       }
     });
   }

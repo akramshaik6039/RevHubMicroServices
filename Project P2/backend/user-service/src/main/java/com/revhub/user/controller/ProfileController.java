@@ -97,13 +97,19 @@ public class ProfileController {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
+            System.out.println("Getting posts for username: " + username + ", userId: " + user.getId());
+            
             ResponseEntity<List> response = restTemplate.getForEntity(
                 "http://post-service:8082/api/posts/user/" + user.getId(),
                 List.class
             );
             
+            System.out.println("Posts response: " + (response.getBody() != null ? response.getBody().size() : "null") + " posts");
+            
             return ResponseEntity.ok(response.getBody());
         } catch (Exception e) {
+            System.err.println("Error getting user posts: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.ok(new ArrayList<>());
         }
     }

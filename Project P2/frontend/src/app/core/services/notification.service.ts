@@ -37,11 +37,11 @@ export class NotificationService {
   }
 
   acceptFollowRequest(followId: number): Observable<string> {
-    return this.http.post(`${this.apiUrl}/follow-request/${followId}/accept`, {}, { responseType: 'text' });
+    return this.http.post(`/api/profile/follow-requests/${followId}/accept`, {}, { responseType: 'text' });
   }
 
   rejectFollowRequest(followId: number): Observable<string> {
-    return this.http.post(`${this.apiUrl}/follow-request/${followId}/reject`, {}, { responseType: 'text' });
+    return this.http.post(`/api/profile/follow-requests/${followId}/reject`, {}, { responseType: 'text' });
   }
 
   deleteNotification(id: string): Observable<any> {

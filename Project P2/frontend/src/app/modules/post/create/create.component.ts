@@ -168,6 +168,8 @@ export class CreateComponent {
       this.isLoading = true;
       this.errorMessage = '';
       
+      const currentUsername = this.authService.getCurrentUser()?.username;
+      
       try {
         if (this.selectedFile) {
           const formData = new FormData();
@@ -178,7 +180,8 @@ export class CreateComponent {
           this.postService.createPostWithFile(formData).subscribe({
             next: (response) => {
               this.isLoading = false;
-              this.router.navigate(['/dashboard']);
+              // Navigate to profile to see the new post
+              this.router.navigate(['/profile', currentUsername]);
             },
             error: (error) => {
               this.isLoading = false;
@@ -190,7 +193,8 @@ export class CreateComponent {
           this.postService.createPost(this.postData).subscribe({
             next: (response) => {
               this.isLoading = false;
-              this.router.navigate(['/dashboard']);
+              // Navigate to profile to see the new post
+              this.router.navigate(['/profile', currentUsername]);
             },
             error: (error) => {
               this.isLoading = false;

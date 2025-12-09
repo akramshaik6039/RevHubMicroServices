@@ -1,5 +1,8 @@
 com\revhub\feed\controller\FeedController.class
+com\revhub\feed\event\ChatMessageEvent.class
 com\revhub\feed\client\FollowClient.class
 com\revhub\feed\client\PostClient.class
 com\revhub\feed\service\FeedService.class
+com\revhub\feed\service\ChatEventConsumer.class
+com\revhub\feed\config\KafkaConsumerConfig.class
 com\revhub\feed\FeedServiceApplication.class

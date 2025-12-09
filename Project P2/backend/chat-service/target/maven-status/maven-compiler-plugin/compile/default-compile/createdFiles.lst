@@ -1,7 +1,10 @@
 com\revhub\chat\entity\ChatMessage.class
 com\revhub\chat\repository\ChatMessageRepository.class
+com\revhub\chat\service\ChatEventProducer.class
+com\revhub\chat\config\KafkaProducerConfig.class
 com\revhub\chat\controller\ChatController$SendMessageRequest.class
 com\revhub\chat\controller\ChatController.class
+com\revhub\chat\event\ChatMessageEvent.class
 com\revhub\chat\service\ChatService.class
 com\revhub\chat\ChatServiceApplication.class
 com\revhub\chat\config\WebSocketConfig.class
