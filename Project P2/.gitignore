@@ -1,0 +1,30 @@
+# Maven
+target/
+*.jar
+*.war
+*.ear
+*.original
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+tfplan
+
+# AWS
+*.pem
+*.key
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Node
+node_modules/
+dist/
+
+# Environment
+.env
+terraform.tfvars

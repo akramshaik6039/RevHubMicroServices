@@ -12,3 +12,8 @@ output "vpc_id" {
   description = "VPC ID"
   value       = aws_vpc.revhub_vpc.id
 }
+
+output "rds_endpoint" {
+  description = "RDS MySQL endpoint"
+  value       = aws_db_instance.mysql.endpoint
+}

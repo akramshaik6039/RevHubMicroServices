@@ -40,6 +40,25 @@ resource "aws_subnet" "public" {
   }
 }
 
+# Private Subnets for RDS
+resource "aws_subnet" "private_a" {
+  vpc_id            = aws_vpc.revhub_vpc.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = "${var.aws_region}a"
+  tags = {
+    Name = "${var.project_name}-private-a"
+  }
+}
+
+resource "aws_subnet" "private_b" {
+  vpc_id            = aws_vpc.revhub_vpc.id
+  cidr_block        = "10.0.3.0/24"
+  availability_zone = "${var.aws_region}b"
+  tags = {
+    Name = "${var.project_name}-private-b"
+  }
+}
+
 # Route Table
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.revhub_vpc.id
@@ -120,4 +139,54 @@ resource "aws_ecr_repository" "repos" {
     "chat-service", "search-service", "frontend"
   ])
   name = "${var.project_name}-${each.key}"
+}
+
+# RDS Subnet Group
+resource "aws_db_subnet_group" "rds" {
+  name       = "${var.project_name}-rds-subnet"
+  subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+  tags = {
+    Name = "${var.project_name}-rds-subnet"
+  }
+}
+
+# Security Group for RDS
+resource "aws_security_group" "rds" {
+  name   = "${var.project_name}-rds-sg"
+  vpc_id = aws_vpc.revhub_vpc.id
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ec2.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# RDS MySQL Instance
+resource "aws_db_instance" "mysql" {
+  identifier             = "${var.project_name}-mysql"
+  engine                 = "mysql"
+  engine_version         = "8.0"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  storage_type           = "gp2"
+  db_name                = "revhub"
+  username               = var.db_username
+  password               = var.db_password
+  db_subnet_group_name   = aws_db_subnet_group.rds.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
+  skip_final_snapshot    = true
+  publicly_accessible    = false
+
+  tags = {
+    Name = "${var.project_name}-mysql"
+  }
 }

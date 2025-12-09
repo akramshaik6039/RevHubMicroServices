@@ -1,3 +1,5 @@
 aws_region   = "ap-south-1"
 project_name = "revhub"
 key_name     = "your-key-pair-name"
+db_username  = "admin"
+db_password  = "your-secure-password"

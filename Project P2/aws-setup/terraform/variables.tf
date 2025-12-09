@@ -14,3 +14,15 @@ variable "key_name" {
   description = "EC2 key pair name"
   type        = string
 }
+
+variable "db_username" {
+  description = "RDS database username"
+  type        = string
+  default     = "admin"
+}
+
+variable "db_password" {
+  description = "RDS database password"
+  type        = string
+  sensitive   = true
+}
