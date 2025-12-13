@@ -31,6 +31,10 @@ spring:
           filters:
             - name: AuthenticationFilter
               args: {}
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/fallback/users
         - id: user-service-uploads
           uri: lb://user-service
           predicates:
@@ -45,12 +49,20 @@ spring:
             - Path=/api/posts/**
           filters:
             - name: AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: post-service
+                fallbackUri: forward:/fallback/posts
         - id: feed-service
           uri: lb://feed-service
           predicates:
             - Path=/api/feed/**
           filters:
             - name: AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: feed-service
+                fallbackUri: forward:/fallback/feed
         - id: follow-service
           uri: lb://follow-service
           predicates:
@@ -95,4 +107,20 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,gateway,circuitbreakers
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-service:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+      post-service:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10
+      feed-service:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        sliding-window-size: 10

@@ -3,6 +3,7 @@ package com.revhub.user.controller;
 import com.revhub.user.entity.User;
 import com.revhub.user.repository.UserRepository;
 import com.revhub.user.service.FileStorageService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,7 @@ public class ProfileController {
     private final RestTemplate restTemplate;
     
     @GetMapping("/{username}")
+    @CircuitBreaker(name = "follow-service", fallbackMethod = "getProfileFallback")
     public ResponseEntity<Map<String, Object>> getProfile(@PathVariable String username) {
         return userRepository.findByUsername(username)
                 .map(user -> {
@@ -33,18 +35,31 @@ public class ProfileController {
                     profile.put("isPrivate", user.getIsPrivate());
                     profile.put("createdAt", user.getCreatedAt());
                     
-                    try {
-                        Long followersCount = restTemplate.getForObject(
-                            "http://follow-service:8083/api/follows/" + user.getId() + "/followers/count", Long.class);
-                        Long followingCount = restTemplate.getForObject(
-                            "http://follow-service:8083/api/follows/" + user.getId() + "/following/count", Long.class);
-                        profile.put("followersCount", followersCount != null ? followersCount : 0);
-                        profile.put("followingCount", followingCount != null ? followingCount : 0);
-                    } catch (Exception e) {
-                        profile.put("followersCount", 0);
-                        profile.put("followingCount", 0);
-                    }
+                    Long followersCount = restTemplate.getForObject(
+                        "http://follow-service:8083/api/follows/" + user.getId() + "/followers/count", Long.class);
+                    Long followingCount = restTemplate.getForObject(
+                        "http://follow-service:8083/api/follows/" + user.getId() + "/following/count", Long.class);
+                    profile.put("followersCount", followersCount != null ? followersCount : 0);
+                    profile.put("followingCount", followingCount != null ? followingCount : 0);
                     
+                    return ResponseEntity.ok(profile);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
+    public ResponseEntity<Map<String, Object>> getProfileFallback(String username, Exception ex) {
+        return userRepository.findByUsername(username)
+                .map(user -> {
+                    Map<String, Object> profile = new HashMap<>();
+                    profile.put("id", user.getId());
+                    profile.put("username", user.getUsername());
+                    profile.put("email", user.getEmail());
+                    profile.put("profilePicture", user.getProfilePicture());
+                    profile.put("bio", user.getBio());
+                    profile.put("isPrivate", user.getIsPrivate());
+                    profile.put("createdAt", user.getCreatedAt());
+                    profile.put("followersCount", 0);
+                    profile.put("followingCount", 0);
                     return ResponseEntity.ok(profile);
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -92,26 +107,21 @@ public class ProfileController {
     }
     
     @GetMapping("/{username}/posts")
+    @CircuitBreaker(name = "post-service", fallbackMethod = "getUserPostsFallback")
     public ResponseEntity<List> getUserPosts(@PathVariable String username) {
-        try {
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            System.out.println("Getting posts for username: " + username + ", userId: " + user.getId());
-            
-            ResponseEntity<List> response = restTemplate.getForEntity(
-                "http://post-service:8082/api/posts/user/" + user.getId(),
-                List.class
-            );
-            
-            System.out.println("Posts response: " + (response.getBody() != null ? response.getBody().size() : "null") + " posts");
-            
-            return ResponseEntity.ok(response.getBody());
-        } catch (Exception e) {
-            System.err.println("Error getting user posts: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.ok(new ArrayList<>());
-        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        ResponseEntity<List> response = restTemplate.getForEntity(
+            "http://post-service:8082/api/posts/user/" + user.getId(),
+            List.class
+        );
+        
+        return ResponseEntity.ok(response.getBody());
+    }
+    
+    public ResponseEntity<List> getUserPostsFallback(String username, Exception ex) {
+        return ResponseEntity.ok(new ArrayList<>());
     }
     
     @PostMapping("/follow/{username}")
