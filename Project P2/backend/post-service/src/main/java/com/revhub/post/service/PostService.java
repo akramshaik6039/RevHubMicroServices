@@ -4,6 +4,8 @@ import com.revhub.post.client.UserClient;
 import com.revhub.post.dto.CommentResponse;
 import com.revhub.post.dto.PostResponse;
 import com.revhub.post.entity.*;
+import com.revhub.post.exception.PostNotFoundException;
+import com.revhub.post.exception.UnauthorizedException;
 import com.revhub.post.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,7 +38,7 @@ public class PostService {
     
     public Post getPostById(Long id) {
         return postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + id));
     }
     
     public List<Post> getUserPosts(Long userId) {
@@ -54,7 +56,7 @@ public class PostService {
     public Post updatePost(Long id, Post updateData, Long userId) {
         Post post = getPostById(id);
         if (!post.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException("You are not authorized to update this post");
         }
         if (updateData.getContent() != null) {
             post.setContent(updateData.getContent());
@@ -70,7 +72,7 @@ public class PostService {
     public void deletePost(Long id, Long userId) {
         Post post = getPostById(id);
         if (!post.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException("You are not authorized to delete this post");
         }
         commentRepository.deleteByPostId(id);
         likeRepository.deleteByPostId(id);

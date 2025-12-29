@@ -17,12 +17,8 @@ public class AuthController {
     
     @PostMapping("/register")
     public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest request) {
-        try {
-            String message = authService.register(request);
-            return ResponseEntity.ok(Map.of("message", message));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        String message = authService.register(request);
+        return ResponseEntity.ok(Map.of("message", message));
     }
     
     @PostMapping("/verify-otp")
